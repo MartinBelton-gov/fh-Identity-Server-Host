@@ -2,8 +2,6 @@
 
 API for adding, editing and deleting Local Authority, Voluntary, Charitable and Faith Organisations, their Users and their Roles.
 
-https://www.scottbrady91.com/identity-server/getting-started-with-identityserver-4
-
 API Login:
 https://localhost:7108/api/Authenticate/login
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FamilyHub.IdentityServerHost.Persistence.Repository;
+using Microsoft.AspNetCore.Builder;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddTransient<ApplicationDbContextInitialiser>();
 
 builder.Services.AddControllers();
 
@@ -40,5 +43,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapRazorPages();
+
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        // Seed Database
+        var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
+        await initialiser.InitialiseAsync(builder.Configuration);
+        await initialiser.SeedAsync();
+
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetService<ILogger<Program>>();
+        if (logger != null)
+            logger.LogError(ex, "An error occurred seeding the DB. {exceptionMessage}", ex.Message);
+    }
+}
 
 app.Run();
