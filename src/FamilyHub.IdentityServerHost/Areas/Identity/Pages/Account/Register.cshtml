@@ -4,9 +4,86 @@
     ViewData["Title"] = "Register";
 }
 
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    /* Create two equal columns that floats next to each other */
+    .column1 {
+        float: left;
+        width: 50%;
+        padding: 10px;
+    }
+
+    .column2 {
+        float: left;
+        width: 50%;
+        padding: 10px;
+    }
+
+    /* Clear floats after the columns */
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+</style>
+
 <h1>@ViewData["Title"]</h1>
 
-<div class="row">
+<main class="govuk-main-wrapper govuk-main-wrapper--auto-spacing" id="main-content" role="main">
+    <div class="govuk-grid-row">
+        <div class="column1">
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <h2>Create a new account.</h2>
+                <hr />
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="govuk-form-group">
+                    <label asp-for="Input.Email" class="govuk-label"></label>
+                    <input asp-for="Input.Email" class="govuk-input govuk-!-width-one-half" autocomplete="username" aria-required="true" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+                <div class="govuk-form-group">
+                    <label asp-for="Input.Password" class="govuk-label"></label>
+                    <input asp-for="Input.Password" class="govuk-input govuk-!-width-one-half" autocomplete="new-password" aria-required="true" />
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+                <div class="govuk-form-group">
+                    <label asp-for="Input.ConfirmPassword" class="govuk-label"></label>
+                    <input asp-for="Input.ConfirmPassword" class="govuk-input govuk-!-width-one-half" autocomplete="new-password" aria-required="true" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                </div>
+                <button id="registerSubmit" type="submit" class="govuk-button">Register</button>
+            </form>
+        </div>
+        <div class="column2">
+            <section>
+                <h3>Available Roles.</h3>
+                <hr />
+                <div class="govuk-form-group">
+                    <div id="type-hint" class="govuk-hint">
+                        Select all that apply.
+                    </div>
+                    <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                        @foreach (var item in @Model.AvailableRoles)
+                        {
+                            <div class="govuk-checkboxes__item">
+                                <input class="govuk-checkboxes__input" id="@item.Name" name="RoleSelection" type="checkbox" value="@item.Id" @(Model.RoleSelection != null && Model.RoleSelection.Any(x=>x==item.Id) ? "checked" : "")> <!--aria-controls="baby-classes-conditional"!-->
+                                <label class="govuk-label govuk-checkboxes__label" for="@item.Name">
+                                    @item.Name
+                                </label>
+                            </div>
+
+                        }
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+@*<div class="row">
     <div class="col-md-4">
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
             <h2>Create a new account.</h2>
@@ -63,7 +140,7 @@
             }
         </section>
     </div>
-</div>
+</div>*@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -1,0 +1,64 @@
+﻿@page
+@model FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account.ManageUsersModel
+@{
+}
+
+<main class="govuk-main-wrapper " id="main-content" role="main">
+    <div class="govuk-grid-row">
+
+        <form method="post">
+
+            <fieldset class="govuk-fieldset">
+                <h1 class="govuk-heading-m">
+                    Users
+                </h1>
+            </fieldset>
+            <fieldset class="govuk-fieldset">
+                <br>
+                <p>
+                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register a new user</a>
+                </p>
+                @*<button type="submit" asp-page-handler="Register New User" class="govuk-button" data-module="govuk-button" data-prevent-double-click="true">
+                    Register New User
+                </button>*@
+            </fieldset>
+
+
+            @if (@Model.Users != null && @Model.Users.Any())
+            {
+                <table class="govuk-table">
+                    <thead class="govuk-table__head">
+                        <tr class="govuk-table__row">
+                            <th scope="col" class="govuk-table__header">Name</th>
+                            <th scope="col" class="govuk-table__header">Email</th>
+                            <th scope="col" class="govuk-table__header">Roles</th>
+                        </tr>
+                    </thead>
+                    <tbody class="govuk-table__body">
+                        @foreach (var item in @Model.Users)
+                        {
+                            <tr class="govuk-table__row">
+                                <th scope="row" class="govuk-table__header">@item.UserName</th>
+                                <td class="govuk-table__cell">@item.Email</td>
+                                <td class="govuk-table__cell">@item.Roles</td>
+                                @*<td class="govuk-table__cell">
+                                    <a asp-page="/OrganisationAdmin/OrganisationDetail" asp-route-id="@item.Id" style="color:blue" class="govuk-!-font-weight-bold govuk-body govuk-!-font-size-16">Edit</a>
+                                </td>*@
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                @*@if (@Model.Organisations != null && @Model.Organisations.Count() > 5)
+                {
+                    <button type="submit" asp-page-handler="Button2" class="govuk-button" data-module="govuk-button" data-prevent-double-click="true">
+                        Add New Orgaisation +
+                    </button>
+                }*@
+
+
+            }
+        </form>
+    </div>
+</main>
+
