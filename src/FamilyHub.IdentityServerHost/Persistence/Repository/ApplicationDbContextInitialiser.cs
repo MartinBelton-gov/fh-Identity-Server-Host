@@ -18,6 +18,8 @@ public class ApplicationDbContextInitialiser
     private readonly UserManager<IdentityUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IApiService _apiService;
+    private readonly IUserStore<IdentityUser> _userStore;
+    private readonly IUserEmailStore<IdentityUser> _emailStore;
 
     private List<OpenReferralOrganisationDto> _openReferralOrganisationDtos = default!;
 
@@ -25,13 +27,17 @@ public class ApplicationDbContextInitialiser
         ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IApiService apiService)
+        IApiService apiService,
+        IUserStore<IdentityUser> userStore
+        )
     {
         _logger = logger;
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
         _apiService = apiService;
+        _userStore = userStore;
+        _emailStore = GetEmailStore();
     }
 
     public async Task InitialiseAsync(IConfiguration configuration)
@@ -79,6 +85,15 @@ public class ApplicationDbContextInitialiser
         await EnsureUsers();
     }
 
+    private IUserEmailStore<IdentityUser> GetEmailStore()
+    {
+        if (!_userManager.SupportsUserEmail)
+        {
+            throw new NotSupportedException("The default UI requires a user store with email support.");
+        }
+        return (IUserEmailStore<IdentityUser>)_userStore;
+    }
+
     private async Task EnsureRoles()
     {
         if (!_roleManager.Roles.Any())
@@ -117,6 +132,7 @@ public class ApplicationDbContextInitialiser
         string[] Pro = new string[] { "BtlPro", "LanPro", "LbrPro", "SalPro", "SufPro", "TowPro" };
         string[] Websites = new string[] { "https://www.bristol.gov.uk/", "https://www.lancashire.gov.uk/", "https://www.redbridge.gov.uk/", "https://www.salford.gov.uk/", "https://www.suffolk.gov.uk/", "https://www.towerhamlets.gov.uk/Home.aspx" };
 
+        await AddUser(_userManager, "martin.belton@digital.education.gov.uk", "Pass123$", "DfEAdmin", "www.warmhandover.gov.uk");
         await AddUser(_userManager, "DfEAdmin", "Pass123$", "DfEAdmin", "www.warmhandover.gov.uk");
         for (int i = 0; i < LAAdmins.Length; i++)
         {
@@ -132,17 +148,39 @@ public class ApplicationDbContextInitialiser
         }
     }
 
+    private IdentityUser CreateUser()
+    {
+        try
+        {
+            return Activator.CreateInstance<IdentityUser>();
+        }
+        catch
+        {
+            throw new InvalidOperationException($"Can't create an instance of '{nameof(IdentityUser)}'. " +
+                $"Ensure that '{nameof(IdentityUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
+                $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
+        }
+    }
+
     private async Task AddUser(UserManager<IdentityUser> userMgr, string person, string password, string role, string website)
     {
         var user = userMgr.FindByNameAsync(person).Result;
         if (user == null)
         {
-            user = new IdentityUser
-            {
-                UserName = person,
-                Email = $"{person}@email.com",
-                EmailConfirmed = true,
-            };
+            user = CreateUser();
+            user.EmailConfirmed = true;
+            string email = $"{person}@email.com";
+            if (person.Contains("@"))
+                email = person;
+
+            //user = new IdentityUser
+            //{
+            //    UserName = person,
+            //    Email = $"{person}@email.com",
+            //    EmailConfirmed = true,
+            //};
+            await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
+            await _emailStore.SetEmailAsync(user, email, CancellationToken.None);
             var result = userMgr.CreateAsync(user, password).Result;
             if (!result.Succeeded)
             {

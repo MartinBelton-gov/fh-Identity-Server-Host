@@ -49,6 +49,19 @@ namespace FamilyHub.IdentityServerHost.Persistence.Data.CreateIdentitySchema
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserOrganisations",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OrganisationId = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserOrganisations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -210,6 +223,9 @@ namespace FamilyHub.IdentityServerHost.Persistence.Data.CreateIdentitySchema
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "UserOrganisations");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
