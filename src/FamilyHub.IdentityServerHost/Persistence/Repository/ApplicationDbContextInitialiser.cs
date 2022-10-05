@@ -1,9 +1,13 @@
-﻿using IdentityModel;
+﻿using FamilyHub.IdentityServerHost.Models.Entities;
+using FamilyHub.IdentityServerHost.Services;
+using FamilyHubs.ServiceDirectory.Shared.Models.Api.OpenReferralOrganisations;
+using IdentityModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Data;
 using System.Security.Claims;
+using System.Threading;
 
 namespace FamilyHub.IdentityServerHost.Persistence.Repository;
 
@@ -13,16 +17,21 @@ public class ApplicationDbContextInitialiser
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IApiService _apiService;
+
+    private List<OpenReferralOrganisationDto> _openReferralOrganisationDtos = default!;
 
     public ApplicationDbContextInitialiser(ILogger<ApplicationDbContextInitialiser> logger,
         ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
-        RoleManager<IdentityRole> roleManager)
+        RoleManager<IdentityRole> roleManager,
+        IApiService apiService)
     {
         _logger = logger;
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
+        _apiService = apiService;
     }
 
     public async Task InitialiseAsync(IConfiguration configuration)
@@ -100,7 +109,8 @@ public class ApplicationDbContextInitialiser
             _logger.LogDebug("Users already populated");
             return;
         }
-            
+
+        _openReferralOrganisationDtos = await _apiService.GetListOpenReferralOrganisations();
 
         string[] LAAdmins = new string[] { "BtlLAAdmin", "LanLAAdmin", "LbrLAAdmin", "SalLAAdmin", "SufLAAdmin", "TowLAAdmin" };
         string[] SvcAdmins = new string[] { "BtlVCSAdmin", "LanVCSAdmin", "LbrVCSAdmin", "SalVCSAdmin", "SufVCSAdmin", "TowVCSAdmin" };
@@ -158,6 +168,45 @@ public class ApplicationDbContextInitialiser
                 throw new Exception(result.Errors.First().Description);
             }
 
+            if (_openReferralOrganisationDtos != null && _openReferralOrganisationDtos.Any())
+            {
+                var currentuser = userMgr.FindByNameAsync(person).Result;
+                if (currentuser != null)
+                {
+                    OpenReferralOrganisationDto? organisation = null;
+                    if (person.StartsWith("Btl"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Bristol"));
+                    }
+                    if (person.StartsWith("Lan"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Lancashire"));
+                    }
+                    if (person.StartsWith("Lbr"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("London Borough of Redbridge"));
+                    }
+                    if (person.StartsWith("Sal"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Salford"));
+                    }
+                    if (person.StartsWith("Suf"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Suffolk"));
+                    }
+                    if (person.StartsWith("Tow"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Suffolk"));
+                    }
+
+                    if (organisation != null)
+                    {
+                        _context.UserOrganisations.Add(new UserOrganisation(Guid.NewGuid().ToString(), currentuser.Id, organisation.Id));
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             _logger.LogDebug($"{person} created");
         }
         else
@@ -165,4 +214,23 @@ public class ApplicationDbContextInitialiser
             _logger.LogDebug($"{person} already exists");
         }
     }
+
+    //private async Task EnsureOrganisationTypes()
+    //{
+    //    if (_context.OrganisationTypes.Any())
+    //    {
+    //        return;
+    //    }
+
+    //    List<OrganisationType> organisationTypes = new()
+    //    {
+    //        new OrganisationType("1", "LA", "Local Authority"),
+    //        new OrganisationType("2", "VCFS", "Voluntary, Charitable, Faith Sector"),
+    //        new OrganisationType("3", "Company", "Public or Private Company")
+    //    };
+
+    //    _context.OrganisationTypes.AddRange(organisationTypes);
+    //    await _context.SaveChangesAsync();
+
+    //}
 }

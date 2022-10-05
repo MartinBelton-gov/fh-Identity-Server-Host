@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FamilyHub.IdentityServerHost.Persistence.Repository;
 using Microsoft.AspNetCore.Builder;
-
+using FamilyHub.IdentityServerHost.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,12 +16,21 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.AddTransient<IApplicationDbContext,ApplicationDbContext>();
 builder.Services.AddTransient<ApplicationDbContextInitialiser>();
+builder.Services.AddTransient<IOrganisationRepository, OrganisationRepository>();
 
 builder.Services.AddControllers();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+builder.Services.AddHttpClient<IApiService, ApiService>();
+
+builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration.GetValue<string>("ServiceDirectoryUrl"));
+});
 
 var app = builder.Build();
 
@@ -48,6 +57,9 @@ using (var scope = app.Services.CreateScope())
 {
     try
     {
+
+        //var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+
         // Seed Database
         var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
         await initialiser.InitialiseAsync(builder.Configuration);

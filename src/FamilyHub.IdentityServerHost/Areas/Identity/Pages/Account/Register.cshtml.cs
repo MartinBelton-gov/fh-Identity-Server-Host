@@ -2,22 +2,18 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading;
-using System.Threading.Tasks;
+using FamilyHub.IdentityServerHost.Persistence.Repository;
+using FamilyHub.IdentityServerHost.Services;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
 
 namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
 {
@@ -30,6 +26,8 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IOrganisationRepository _organisationRepository;
+        private readonly IApiService _apiService;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
@@ -37,7 +35,9 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            IOrganisationRepository organisationRepository,
+            IApiService apiService)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -46,6 +46,8 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
             _logger = logger;
             _emailSender = emailSender;
             _roleManager = roleManager;
+            _organisationRepository = organisationRepository;
+            _apiService = apiService;   
         }
 
         /// <summary>
@@ -71,6 +73,10 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
 
         [BindProperty]
         public List<string> RoleSelection { get; set; } = default!;
+
+        [BindProperty]
+        public string SelectedOrganisation { get; set; } = default!;
+        public List<SelectListItem> OrganisationList { get; set; } = default(List<SelectListItem>);
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -112,6 +118,8 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             AvailableRoles = _roleManager.Roles.OrderBy(x => x.Name).ToList();
+            var list = await _apiService.GetListOpenReferralOrganisations();
+            OrganisationList = list.OrderBy(x => x.Name).Select(c => new SelectListItem() { Text = c.Name, Value = c.Id }).ToList();
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
