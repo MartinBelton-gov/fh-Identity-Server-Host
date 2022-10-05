@@ -4,6 +4,8 @@
 
 using FamilyHub.IdentityServerHost.Persistence.Repository;
 using FamilyHub.IdentityServerHost.Services;
+using FamilyHubs.ServiceDirectory.Shared.Models.Api.OpenReferralOrganisations;
+using IdentityModel;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -11,7 +13,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 
@@ -28,6 +33,8 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IOrganisationRepository _organisationRepository;
         private readonly IApiService _apiService;
+
+        private List<OpenReferralOrganisationDto> _openReferralOrganisationDtos = default!;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
@@ -139,6 +146,9 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
+                    await AddUserOrganisation(user);
+                    await AddUserRoles(user);
+
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -192,6 +202,55 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
                 throw new NotSupportedException("The default UI requires a user store with email support.");
             }
             return (IUserEmailStore<IdentityUser>)_userStore;
+        }
+
+        private async Task AddUserOrganisation(IdentityUser user)
+        {
+            if (user == null || string.IsNullOrEmpty(SelectedOrganisation))
+                return;
+
+            if (_openReferralOrganisationDtos == null || !_openReferralOrganisationDtos.Any())
+            {
+                _openReferralOrganisationDtos = await _apiService.GetListOpenReferralOrganisations();
+            }
+
+            if (_openReferralOrganisationDtos == null)
+                return;
+
+            var organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Id == SelectedOrganisation);
+            if (organisation == null)
+                return;
+
+            await _organisationRepository.AddUserOrganisationAsync(new Models.Entities.UserOrganisation(Guid.NewGuid().ToString(), user.Id, organisation.Id));
+        }
+
+        private async Task AddUserRoles(IdentityUser user)
+        {
+            if (RoleSelection == null || !RoleSelection.Any())
+            {
+                return;
+            }
+            var roles = String.Join(", ", RoleSelection.ToArray());
+            var result = _userManager.AddClaimsAsync(user, new Claim[]
+            {
+        new Claim(JwtClaimTypes.Name, user.UserName),
+        new Claim(JwtClaimTypes.GivenName, user.NormalizedUserName),
+        new Claim(JwtClaimTypes.Role, roles),
+        //new Claim(JwtClaimTypes.FamilyName, "Smith"),
+        //new Claim(JwtClaimTypes.WebSite, "http://warmhandover.gov.uk"),
+            }).Result;
+            if (!result.Succeeded)
+            {
+                throw new Exception(result.Errors.First().Description);
+            }
+            foreach(var role in RoleSelection)
+            {
+                result = await _userManager.AddToRoleAsync(user, role);
+                if (!result.Succeeded)
+                {
+                    throw new Exception(result.Errors.First().Description);
+                }
+            }
         }
     }
 }

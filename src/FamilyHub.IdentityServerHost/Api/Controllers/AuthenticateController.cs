@@ -1,4 +1,5 @@
 ﻿using FamilyHub.IdentityServerHost.Models;
+using FamilyHub.IdentityServerHost.Persistence.Repository;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -15,15 +16,18 @@ public class AuthenticateController : ControllerBase
     private readonly UserManager<IdentityUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IConfiguration _configuration;
+    private readonly IOrganisationRepository _organisationRepository;
 
     public AuthenticateController(
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IOrganisationRepository organisationRepository)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _configuration = configuration;
+        _organisationRepository = organisationRepository;
     }
 
     [HttpPost]
@@ -46,6 +50,12 @@ public class AuthenticateController : ControllerBase
                 authClaims.Add(new Claim(ClaimTypes.Role, userRole));
             }
 
+            string organisationId = _organisationRepository.GetUserOrganisationId(user.Id);
+            if (!string.IsNullOrEmpty(organisationId))
+            {
+                authClaims.Add(new Claim("OpenReferralOrganisationId", organisationId));
+            }
+
             var token = GetToken(authClaims);
 
             //var tokenInfo = GetTokenInfo(new JwtSecurityTokenHandler().WriteToken(token));
@@ -60,21 +70,21 @@ public class AuthenticateController : ControllerBase
     }
 
     
-    protected Dictionary<string, string> GetTokenInfo(string token)
-    {
-        var TokenInfo = new Dictionary<string, string>();
+    //protected Dictionary<string, string> GetTokenInfo(string token)
+    //{
+    //    var TokenInfo = new Dictionary<string, string>();
 
-        var handler = new JwtSecurityTokenHandler();
-        var jwtSecurityToken = handler.ReadJwtToken(token);
-        var claims = jwtSecurityToken.Claims.ToList();
+    //    var handler = new JwtSecurityTokenHandler();
+    //    var jwtSecurityToken = handler.ReadJwtToken(token);
+    //    var claims = jwtSecurityToken.Claims.ToList();
 
-        foreach (var claim in claims)
-        {
-            TokenInfo.Add(claim.Type, claim.Value);
-        }
+    //    foreach (var claim in claims)
+    //    {
+    //        TokenInfo.Add(claim.Type, claim.Value);
+    //    }
 
-        return TokenInfo;
-    }
+    //    return TokenInfo;
+    //}
     
 
     [HttpPost]

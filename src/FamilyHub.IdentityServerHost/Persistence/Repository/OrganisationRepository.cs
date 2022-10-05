@@ -5,6 +5,7 @@ namespace FamilyHub.IdentityServerHost.Persistence.Repository;
 public interface IOrganisationRepository
 {
     Task AddUserOrganisationAsync(UserOrganisation userOrganisation, CancellationToken cancellationToken = new CancellationToken());
+    string GetUserOrganisationId(string userId);
 }
 
 public class OrganisationRepository : IOrganisationRepository
@@ -29,6 +30,17 @@ public class OrganisationRepository : IOrganisationRepository
             throw new Exception(ex.Message, ex);
         }
         
+    }
+
+    public string GetUserOrganisationId(string userId)
+    {
+        var userOrganisation = _applicationDbContext.UserOrganisations.FirstOrDefault(x => x.UserId == userId);
+        if (userOrganisation != null)
+        {
+            return userOrganisation.OrganisationId;
+        }
+
+        return string.Empty;
     }
 
 }
