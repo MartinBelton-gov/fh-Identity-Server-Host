@@ -24,7 +24,7 @@
         @if (User.IsInRole("DfEAdmin"))
         {
             <p>
-                <a asp-area="Identity"  asp-page="/Account/ManageUsers">Manage users</a>
+                <a asp-area="Identity"  asp-page="/Account/ManageUsers" asp-route-pageNumber="1" >Manage users</a>
             </p>
             
         }

@@ -24,7 +24,7 @@
             </fieldset>
 
 
-            @if (@Model.Users != null && @Model.Users.Any())
+            @if (@Model.Users != null && @Model.Users.Items.Any())
             {
                 <table class="govuk-table">
                     <thead class="govuk-table__head">
@@ -35,7 +35,7 @@
                         </tr>
                     </thead>
                     <tbody class="govuk-table__body">
-                        @foreach (var item in @Model.Users)
+                        @foreach (var item in @Model.Users.Items)
                         {
                             <tr class="govuk-table__row">
                                 <th scope="row" class="govuk-table__header">@item.UserName</th>
@@ -49,14 +49,54 @@
                     </tbody>
                 </table>
 
-                @*@if (@Model.Organisations != null && @Model.Organisations.Count() > 5)
-                {
-                    <button type="submit" asp-page-handler="Button2" class="govuk-button" data-module="govuk-button" data-prevent-double-click="true">
-                        Add New Orgaisation +
-                    </button>
-                }*@
-
-
+                <nav class="govuk-pagination" role="navigation" aria-label="results">
+                    @if(Model.PageNumber > 1)
+                    {
+                        <div class="govuk-pagination__prev">
+                            <a class="govuk-link govuk-pagination__link" asp-page="./ManageUsers" asp-route-pageNumber="@(Model.PageNumber - 1)" rel="prev">
+                                <svg class="govuk-pagination__icon govuk-pagination__icon--prev" xmlns="http://www.w3.org/2000/svg" height="13" width="15" aria-hidden="true" focusable="false" viewBox="0 0 15 13">
+                                    <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
+                                </svg>
+                                <span class="govuk-pagination__link-title">Previous</span>
+                            </a>
+                        </div>
+                    }
+                    <ul class="govuk-pagination__list">
+                        @for(int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            string pageLable = $"Page {i}";
+                            if (Model.PageNumber == i)
+                            {
+                                <li class="govuk-pagination__item govuk-pagination__item--current">
+                                    <a class="govuk-link govuk-pagination__link" asp-page="./ManageUsers" asp-route-pageNumber="@i" aria-label="@pageLable" aria-current="page">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="govuk-pagination__item">
+                                    <a class="govuk-link govuk-pagination__link" asp-page="./ManageUsers" asp-route-pageNumber="@i" aria-label="@pageLable">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+                            
+                        }
+                       
+                    </ul>
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <div class="govuk-pagination__next">
+                            <a class="govuk-link govuk-pagination__link" asp-page="./ManageUsers" asp-route-pageNumber="@(Model.PageNumber + 1)" rel="next">
+                                <span class="govuk-pagination__link-title">Next</span>
+                                <svg class="govuk-pagination__icon govuk-pagination__icon--next" xmlns="http://www.w3.org/2000/svg" height="13" width="15" aria-hidden="true" focusable="false" viewBox="0 0 15 13">
+                                    <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    } 
+                </nav>
             }
         </form>
     </div>
