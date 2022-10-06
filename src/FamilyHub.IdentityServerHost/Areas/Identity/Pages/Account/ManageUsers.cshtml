@@ -50,7 +50,10 @@
                                 <td class="govuk-table__cell">@item.Email</td>
                                 <td class="govuk-table__cell">@item.Roles</td>
                                 <td class="govuk-table__cell">
-                                    <button asp-page-handler="ResetPassword" asp-route-id="@item.Email" style="color:blue" class="govuk-!-font-weight-bold govuk-body govuk-!-font-size-16">Reset Password</button>
+                                    <button asp-page-handler="ResetPassword" asp-route-id="@item.Email" class="govuk-button govuk-!-font-weight-bold govuk-body govuk-!-font-size-16" data-module="govuk-button">Reset Password</button>
+                                    <button asp-page-handler="DeleteUser" asp-route-id="@item.Id" class="govuk-button govuk-button--warning" data-module="govuk-button">
+                                        Delete account
+                                    </button>
                                 </td>
                             </tr>
                         }

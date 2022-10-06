@@ -50,7 +50,7 @@ public class AuthenticateController : ControllerBase
                 authClaims.Add(new Claim(ClaimTypes.Role, userRole));
             }
 
-            string organisationId = _organisationRepository.GetUserOrganisationId(user.Id);
+            string organisationId = _organisationRepository.GetUserOrganisationIdByUserId(user.Id);
             if (!string.IsNullOrEmpty(organisationId))
             {
                 authClaims.Add(new Claim("OpenReferralOrganisationId", organisationId));

@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text;
+using FamilyHub.IdentityServerHost.Persistence.Repository;
+using FamilyHub.IdentityServerHost.Models.Entities;
 
 namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account;
 
@@ -16,6 +18,8 @@ public class ManageUsersModel : PageModel
     
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IEmailSender _emailSender;
+    private readonly IOrganisationRepository _organisationRepository;
+    
 
     [BindProperty]
     public int PageNumber { get; set; } = 1;
@@ -30,10 +34,12 @@ public class ManageUsersModel : PageModel
     public PaginatedList<ApplicationUser> Users { get; set; } = new PaginatedList<ApplicationUser>();
     public string ReturnUrl { get; set; } = default!;
 
-    public ManageUsersModel(UserManager<IdentityUser> userManager, IEmailSender emailSender)
+    public ManageUsersModel(UserManager<IdentityUser> userManager, IEmailSender emailSender, IOrganisationRepository organisationRepository)
     {
         _userManager = userManager;       
         _emailSender = emailSender;
+        _organisationRepository = organisationRepository;
+        
     }
 
     public async Task OnGet(string pageNumber)
@@ -68,24 +74,40 @@ public class ManageUsersModel : PageModel
     private async Task GetPage()
     {
         ReturnUrl ??= Url.Content("~/Identity/Account/ManageUsers");
+        
+        List<UserOrganisation> userOrganisations = _organisationRepository.GetUserOrganisations();
 
         var users = _userManager.Users.OrderBy(x => x.UserName).ToList();
         List<ApplicationUser> applicationUsers = new();
         foreach (var user in users)
         {
             var roles = await _userManager.GetRolesAsync(user);
+            string? organisationId = null;
+            var userOrganisation = userOrganisations.FirstOrDefault(x => x.UserId == user.Id);
+            if (userOrganisation != null)
+                organisationId = userOrganisation.OrganisationId;
 
             applicationUsers.Add(new ApplicationUser()
             {
                 Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
-                Roles = string.Join(", ", roles)
+                Roles = string.Join(", ", roles),
+                OrganisationId = organisationId
             });
         }
 
         //filter depending on user
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        //Only show people in their own organisation
+        if (!User.IsInRole("DfEAdmin"))
+        {
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var currentUser = applicationUsers.FirstOrDefault(x => x.Email == userEmail);
+            if (currentUser != null)
+            {
+                applicationUsers = applicationUsers.Where(x => x.OrganisationId == currentUser.OrganisationId || string.IsNullOrEmpty(x.OrganisationId)).ToList();
+            }  
+        }
 
         List<ApplicationUser> pagelist;
         if (!string.IsNullOrEmpty(Search))
@@ -122,8 +144,16 @@ public class ManageUsersModel : PageModel
         await _emailSender.SendEmailAsync(
             user.Email,
             "Reset Password",
-            $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+            $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl ?? string.Empty)}'>clicking here</a>.");
 
         return RedirectToPage("./ForgotPasswordConfirmation");
+    }
+
+    public IActionResult OnPostDeleteUser(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return Page();
+
+        return RedirectToPage($"./DeleteUser", new { id });
     }
 }

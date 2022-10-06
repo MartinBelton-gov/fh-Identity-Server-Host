@@ -1,11 +1,14 @@
 ﻿using FamilyHub.IdentityServerHost.Models.Entities;
+using System.Threading;
 
 namespace FamilyHub.IdentityServerHost.Persistence.Repository;
 
 public interface IOrganisationRepository
 {
     Task AddUserOrganisationAsync(UserOrganisation userOrganisation, CancellationToken cancellationToken = new CancellationToken());
-    string GetUserOrganisationId(string userId);
+    string GetUserOrganisationIdByUserId(string userId);
+    List<UserOrganisation> GetUserOrganisations();
+    Task DeleteUserByUserIdAsync(string userId, CancellationToken cancellationToken = new CancellationToken());
 }
 
 public class OrganisationRepository : IOrganisationRepository
@@ -32,7 +35,7 @@ public class OrganisationRepository : IOrganisationRepository
         
     }
 
-    public string GetUserOrganisationId(string userId)
+    public string GetUserOrganisationIdByUserId(string userId)
     {
         var userOrganisation = _applicationDbContext.UserOrganisations.FirstOrDefault(x => x.UserId == userId);
         if (userOrganisation != null)
@@ -41,6 +44,21 @@ public class OrganisationRepository : IOrganisationRepository
         }
 
         return string.Empty;
+    }
+
+    public List<UserOrganisation> GetUserOrganisations()
+    {
+        return _applicationDbContext.UserOrganisations.ToList();
+    }
+
+    public async Task DeleteUserByUserIdAsync(string userId, CancellationToken cancellationToken = new CancellationToken())
+    {
+        var userOrganisation = _applicationDbContext.UserOrganisations.FirstOrDefault(x => x.UserId == userId);
+        if (userOrganisation != null)
+        {
+            _applicationDbContext.UserOrganisations.Remove(userOrganisation);
+            await _applicationDbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 
 }
