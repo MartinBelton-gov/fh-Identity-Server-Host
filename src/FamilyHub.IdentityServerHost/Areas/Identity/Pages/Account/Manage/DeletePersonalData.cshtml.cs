@@ -2,13 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
+using FamilyHub.IdentityServerHost.Persistence.Repository;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
+using System.ComponentModel.DataAnnotations;
 
 namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account.Manage
 {
@@ -17,15 +15,18 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<DeletePersonalDataModel> _logger;
+        private readonly IOrganisationRepository _organisationRepository;
 
         public DeletePersonalDataModel(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
-            ILogger<DeletePersonalDataModel> logger)
+            ILogger<DeletePersonalDataModel> logger,
+            IOrganisationRepository organisationRepository)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _organisationRepository = organisationRepository;
         }
 
         /// <summary>
@@ -85,6 +86,8 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account.Manage
                     return Page();
                 }
             }
+
+            await _organisationRepository.DeleteUserByUserIdAsync(user.Id);
 
             var result = await _userManager.DeleteAsync(user);
             var userId = await _userManager.GetUserIdAsync(user);

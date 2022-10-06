@@ -1,9 +1,13 @@
-﻿using IdentityModel;
+﻿using FamilyHub.IdentityServerHost.Models.Entities;
+using FamilyHub.IdentityServerHost.Services;
+using FamilyHubs.ServiceDirectory.Shared.Models.Api.OpenReferralOrganisations;
+using IdentityModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Data;
 using System.Security.Claims;
+using System.Threading;
 
 namespace FamilyHub.IdentityServerHost.Persistence.Repository;
 
@@ -13,16 +17,27 @@ public class ApplicationDbContextInitialiser
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IApiService _apiService;
+    private readonly IUserStore<IdentityUser> _userStore;
+    private readonly IUserEmailStore<IdentityUser> _emailStore;
+
+    private List<OpenReferralOrganisationDto> _openReferralOrganisationDtos = default!;
 
     public ApplicationDbContextInitialiser(ILogger<ApplicationDbContextInitialiser> logger,
         ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
-        RoleManager<IdentityRole> roleManager)
+        RoleManager<IdentityRole> roleManager,
+        IApiService apiService,
+        IUserStore<IdentityUser> userStore
+        )
     {
         _logger = logger;
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
+        _apiService = apiService;
+        _userStore = userStore;
+        _emailStore = GetEmailStore();
     }
 
     public async Task InitialiseAsync(IConfiguration configuration)
@@ -70,6 +85,15 @@ public class ApplicationDbContextInitialiser
         await EnsureUsers();
     }
 
+    private IUserEmailStore<IdentityUser> GetEmailStore()
+    {
+        if (!_userManager.SupportsUserEmail)
+        {
+            throw new NotSupportedException("The default UI requires a user store with email support.");
+        }
+        return (IUserEmailStore<IdentityUser>)_userStore;
+    }
+
     private async Task EnsureRoles()
     {
         if (!_roleManager.Roles.Any())
@@ -94,19 +118,20 @@ public class ApplicationDbContextInitialiser
 
     private async Task EnsureUsers()
     {
-        var user = _userManager.FindByNameAsync("DfEAdmin").Result;
-        if (user != null)
+        if (_userManager.Users.Any())
         {
             _logger.LogDebug("Users already populated");
             return;
         }
-            
+
+        _openReferralOrganisationDtos = await _apiService.GetListOpenReferralOrganisations();
 
         string[] LAAdmins = new string[] { "BtlLAAdmin", "LanLAAdmin", "LbrLAAdmin", "SalLAAdmin", "SufLAAdmin", "TowLAAdmin" };
         string[] SvcAdmins = new string[] { "BtlVCSAdmin", "LanVCSAdmin", "LbrVCSAdmin", "SalVCSAdmin", "SufVCSAdmin", "TowVCSAdmin" };
         string[] Pro = new string[] { "BtlPro", "LanPro", "LbrPro", "SalPro", "SufPro", "TowPro" };
         string[] Websites = new string[] { "https://www.bristol.gov.uk/", "https://www.lancashire.gov.uk/", "https://www.redbridge.gov.uk/", "https://www.salford.gov.uk/", "https://www.suffolk.gov.uk/", "https://www.towerhamlets.gov.uk/Home.aspx" };
 
+        await AddUser(_userManager, "martin.belton@digital.education.gov.uk", "Pass123$", "DfEAdmin", "www.warmhandover.gov.uk");
         await AddUser(_userManager, "DfEAdmin", "Pass123$", "DfEAdmin", "www.warmhandover.gov.uk");
         for (int i = 0; i < LAAdmins.Length; i++)
         {
@@ -122,17 +147,39 @@ public class ApplicationDbContextInitialiser
         }
     }
 
+    private IdentityUser CreateUser()
+    {
+        try
+        {
+            return Activator.CreateInstance<IdentityUser>();
+        }
+        catch
+        {
+            throw new InvalidOperationException($"Can't create an instance of '{nameof(IdentityUser)}'. " +
+                $"Ensure that '{nameof(IdentityUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
+                $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
+        }
+    }
+
     private async Task AddUser(UserManager<IdentityUser> userMgr, string person, string password, string role, string website)
     {
         var user = userMgr.FindByNameAsync(person).Result;
         if (user == null)
         {
-            user = new IdentityUser
-            {
-                UserName = person,
-                Email = $"{person}@email.com",
-                EmailConfirmed = true,
-            };
+            user = CreateUser();
+            user.EmailConfirmed = true;
+            string email = $"{person}@email.com";
+            if (person.Contains("@"))
+                email = person;
+
+            //user = new IdentityUser
+            //{
+            //    UserName = person,
+            //    Email = $"{person}@email.com",
+            //    EmailConfirmed = true,
+            //};
+            await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
+            await _emailStore.SetEmailAsync(user, email, CancellationToken.None);
             var result = userMgr.CreateAsync(user, password).Result;
             if (!result.Succeeded)
             {
@@ -158,6 +205,45 @@ public class ApplicationDbContextInitialiser
                 throw new Exception(result.Errors.First().Description);
             }
 
+            if (_openReferralOrganisationDtos != null && _openReferralOrganisationDtos.Any())
+            {
+                var currentuser = userMgr.FindByEmailAsync(email).Result;
+                if (currentuser != null)
+                {
+                    OpenReferralOrganisationDto? organisation = null;
+                    if (person.StartsWith("Btl"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Bristol"));
+                    }
+                    if (person.StartsWith("Lan"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Lancashire"));
+                    }
+                    if (person.StartsWith("Lbr"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("London Borough of Redbridge"));
+                    }
+                    if (person.StartsWith("Sal"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Salford"));
+                    }
+                    if (person.StartsWith("Suf"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Suffolk"));
+                    }
+                    if (person.StartsWith("Tow"))
+                    {
+                        organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Name != null && x.Name.StartsWith("Suffolk"));
+                    }
+
+                    if (organisation != null)
+                    {
+                        _context.UserOrganisations.Add(new UserOrganisation(Guid.NewGuid().ToString(), currentuser.Id, organisation.Id));
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             _logger.LogDebug($"{person} created");
         }
         else
@@ -165,4 +251,23 @@ public class ApplicationDbContextInitialiser
             _logger.LogDebug($"{person} already exists");
         }
     }
+
+    //private async Task EnsureOrganisationTypes()
+    //{
+    //    if (_context.OrganisationTypes.Any())
+    //    {
+    //        return;
+    //    }
+
+    //    List<OrganisationType> organisationTypes = new()
+    //    {
+    //        new OrganisationType("1", "LA", "Local Authority"),
+    //        new OrganisationType("2", "VCFS", "Voluntary, Charitable, Faith Sector"),
+    //        new OrganisationType("3", "Company", "Public or Private Company")
+    //    };
+
+    //    _context.OrganisationTypes.AddRange(organisationTypes);
+    //    await _context.SaveChangesAsync();
+
+    //}
 }

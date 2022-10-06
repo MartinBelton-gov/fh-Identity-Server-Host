@@ -1,10 +1,29 @@
-﻿@page
+﻿
+@page
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
 }
 
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome to Admin UI Portal</h1>
+   @* <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>*@
+
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <p>
+            <a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Manage personnal details: @UserManager.GetUserName(User)</a>
+        </p>
+
+        <p>
+            <a asp-area="Identity" asp-page="/Account/ManageUsers" asp-route-pageNumber="1">Manage users</a>
+        </p>
+    }
+
 </div>
