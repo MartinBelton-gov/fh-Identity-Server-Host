@@ -105,6 +105,7 @@ public class ManageUsersModel : PageModel
             var currentUser = applicationUsers.FirstOrDefault(x => x.Email == userEmail);
             if (currentUser != null)
             {
+                applicationUsers = applicationUsers.Where(x => x.Roles.Contains("DfEAdmin") == false).ToList();
                 applicationUsers = applicationUsers.Where(x => x.OrganisationId == currentUser.OrganisationId || string.IsNullOrEmpty(x.OrganisationId)).ToList();
             }  
         }

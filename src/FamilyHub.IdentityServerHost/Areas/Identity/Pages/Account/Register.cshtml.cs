@@ -81,6 +81,7 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         [BindProperty]
         public List<string> RoleSelection { get; set; } = default!;
 
+        [Required]
         [BindProperty]
         public string SelectedOrganisation { get; set; } = default!;
         public List<SelectListItem> OrganisationList { get; set; } = default(List<SelectListItem>);
@@ -124,10 +125,25 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         public async Task OnGetAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
-            AvailableRoles = _roleManager.Roles.OrderBy(x => x.Name).ToList();
+            await Init();
+        }
+
+        private async Task Init()
+        {
+            if (User.IsInRole("DfEAdmin"))
+                AvailableRoles = _roleManager.Roles.OrderBy(x => x.Name).ToList();
+            else
+                AvailableRoles = _roleManager.Roles.Where(x => x.Name != "DfEAdmin").OrderBy(x => x.Name).ToList();
             var list = await _apiService.GetListOpenReferralOrganisations();
             OrganisationList = list.OrderBy(x => x.Name).Select(c => new SelectListItem() { Text = c.Name, Value = c.Id }).ToList();
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            if (!User.IsInRole("DfEAdmin"))
+            {
+                var userEmail = User.FindFirstValue(ClaimTypes.Email);
+                var user = await _userManager.FindByEmailAsync(userEmail);
+                SelectedOrganisation = _organisationRepository.GetUserOrganisationIdByUserId(user.Id);
+            }
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -176,6 +192,12 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
+
+            if (!ModelState.IsValid)
+            {
+                await Init();
+            }
+
 
             // If we got this far, something failed, redisplay form
             return Page();

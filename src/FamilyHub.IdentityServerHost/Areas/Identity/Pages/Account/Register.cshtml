@@ -41,7 +41,18 @@
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <div class="govuk-form-group">
                     <label for="chooseLanguage1" class="govuk-label">Select an organisation</label>
-                    <select class="govuk-select" id="SelectedOrganisation" name="SelectedOrganisation" asp-for="@Model.SelectedOrganisation" asp-items="@Model.OrganisationList"></select>
+                    @if(User.IsInRole("DfEAdmin"))
+                    {
+                        <select class="govuk-select" id="SelectedOrganisation" name="SelectedOrganisation" asp-for="@Model.SelectedOrganisation" asp-items="@Model.OrganisationList"></select>
+                        <span asp-validation-for="SelectedOrganisation" class="text-danger"></span>
+                    }
+                    else
+                    {
+                        <select class="govuk-select" id="SelectedOrganisation" name="SelectedOrganisation" asp-for="@Model.SelectedOrganisation" asp-items="@Model.OrganisationList" disabled></select>
+                        <input asp-for="@Model.SelectedOrganisation" name="SelectedOrganisation" type="hidden" />
+                        <span asp-validation-for="SelectedOrganisation" class="text-danger"></span>
+                    }
+                    
                 </div>
                 <div class="govuk-form-group">
                     <label asp-for="Input.Email" class="govuk-label"></label>
@@ -77,6 +88,7 @@
                                 <label class="govuk-label govuk-checkboxes__label" for="@item.Name">
                                     @item.Name
                                 </label>
+                                <span asp-validation-for="RoleSelection" class="text-danger"></span>
                             </div>
 
                         }

@@ -118,8 +118,7 @@ public class ApplicationDbContextInitialiser
 
     private async Task EnsureUsers()
     {
-        var user = _userManager.FindByNameAsync("DfEAdmin").Result;
-        if (user != null)
+        if (_userManager.Users.Any())
         {
             _logger.LogDebug("Users already populated");
             return;
@@ -208,7 +207,7 @@ public class ApplicationDbContextInitialiser
 
             if (_openReferralOrganisationDtos != null && _openReferralOrganisationDtos.Any())
             {
-                var currentuser = userMgr.FindByNameAsync(person).Result;
+                var currentuser = userMgr.FindByEmailAsync(email).Result;
                 if (currentuser != null)
                 {
                     OpenReferralOrganisationDto? organisation = null;
