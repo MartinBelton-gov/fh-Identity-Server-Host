@@ -11,7 +11,6 @@ public class EmailSetting
 {
     public string FromEmail { get; set; } = "donot-reply@emailserver.com";
     public int Port { get; set; } = 587;
-
     public string SMTPServer { get; set; } = "smtp.gmail.com";
     public string EmailServerUserName { get; set; } = default!;
     public string EmailServerPassword { get; set; } = default!;
@@ -49,7 +48,5 @@ public class EmailSender : IEmailSender
         {
             await smtpClient.SendMailAsync(mailMessage);
         }
-
-        
     }
 }
