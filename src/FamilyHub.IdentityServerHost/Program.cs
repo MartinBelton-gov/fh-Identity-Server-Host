@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using FamilyHub.IdentityServerHost.Persistence.Repository;
 using Microsoft.AspNetCore.Builder;
 using FamilyHub.IdentityServerHost.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,12 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 builder.Services.AddTransient<IApplicationDbContext,ApplicationDbContext>();
 builder.Services.AddTransient<ApplicationDbContextInitialiser>();
 builder.Services.AddTransient<IOrganisationRepository, OrganisationRepository>();
+
+bool isEmailEnabled = builder.Configuration.GetValue<bool>("EmailSetting:IsEmailEnabled");
+if (isEmailEnabled)
+{
+    builder.Services.AddTransient<IEmailSender, EmailSender>();
+}
 
 builder.Services.AddControllers();
 

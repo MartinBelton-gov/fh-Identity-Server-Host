@@ -21,9 +21,14 @@
             <a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Manage personnal details: @UserManager.GetUserName(User)</a>
         </p>
 
-        <p>
-            <a asp-area="Identity" asp-page="/Account/ManageUsers" asp-route-pageNumber="1">Manage users</a>
-        </p>
+        @if (User.IsInRole("DfEAdmin") || User.IsInRole("LAAdmin") || User.IsInRole("VCSAdmin"))
+        {
+            <p>
+                <a asp-area="Identity" asp-page="/Account/ManageUsers" asp-route-pageNumber="1">Manage users</a>
+            </p>
+        }
+
+        
     }
 
 </div>
