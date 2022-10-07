@@ -9,6 +9,7 @@ namespace FamilyHub.IdentityServerHost.Services;
 
 public class EmailSetting
 {
+    public bool IsEmailEnabled { get; set; }
     public string FromEmail { get; set; } = "donot-reply@emailserver.com";
     public int Port { get; set; } = 587;
     public string SMTPServer { get; set; } = "smtp.gmail.com";
