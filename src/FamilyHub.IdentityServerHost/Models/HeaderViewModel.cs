@@ -42,11 +42,12 @@ public class HeaderViewModel : IHeaderViewModel
 
         // Header links
         AddOrUpdateLink(new GovUk(GovUkHref, isLegacy: UseLegacyStyles));
-        AddOrUpdateLink(new HomeLink("/Index", UseLegacyStyles ? "" : "govuk-header__link govuk-header__link--service-name"));
+        
         if (userContext != null && userContext.User != null && userContext.User.Identity != null)
         {
             if (userContext.User.Identity.IsAuthenticated)
             {
+                AddOrUpdateLink(new HomeLink("/Index", UseLegacyStyles ? "" : "govuk-header__link govuk-header__link--service-name"));
                 AddOrUpdateLink(new SignOutLink("/Identity/Account/Logout", UseLegacyStyles ? "" : "govuk-header__link govuk-header__link--service-name"));
             }
             else

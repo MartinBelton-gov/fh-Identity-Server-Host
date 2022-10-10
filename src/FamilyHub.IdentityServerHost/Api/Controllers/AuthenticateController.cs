@@ -7,6 +7,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
+//Look at this for the refresh token
+//https://www.c-sharpcorner.com/article/jwt-authentication-with-refresh-tokens-in-net-6-0/
+
 namespace FamilyHub.IdentityServerHost.Api.Controllers;
 
 [Route("api/[controller]")]
