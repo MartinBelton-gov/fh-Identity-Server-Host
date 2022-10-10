@@ -20,6 +20,7 @@
                         Name
                     </label>
                     <input class="govuk-input" id="Organisation.Name" name="Organisation.Name" value="@Model.Organisation.Name" type="text" autocomplete="Organisation.Name">
+                    <span asp-validation-for="Organisation.Name" class="text-danger"></span>
                 </div>
 
                 <div class="govuk-form-group">
@@ -34,13 +35,15 @@
                         Logo
                     </label>
                     <input class="govuk-input" id="Organisation.Logo" name="Organisation.Logo" value="@Model.Organisation.Logo" type="text" autocomplete="Organisation.Logo">
+                    <span asp-validation-for="Organisation.Logo" class="text-danger"></span>
                 </div>
 
                 <div class="govuk-form-group">
-                    <label class="govuk-label" for="Organisation.Url">
+                    <label class="govuk-label" for="Organisation.Logo">
                         Url
                     </label>
                     <input class="govuk-input" id="Organisation.Url" name="Organisation.Url" value="@Model.Organisation.Url" type="text" autocomplete="Organisation.Url">
+                    <span asp-validation-for="Organisation.Url" class="text-danger"></span>
                 </div>
 
                 <button type="submit" class="govuk-button" data-module="govuk-button" data-prevent-double-click="true">

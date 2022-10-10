@@ -1,8 +1,11 @@
 using FamilyHub.IdentityServerHost.Services;
 using FamilyHubs.ServiceDirectory.Shared.Models.Api.OpenReferralOrganisations;
+using FamilyHubs.ServiceDirectory.Shared.Models.Api.OpenReferralServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Policy;
 using System.Xml.Linq;
 
 namespace FamilyHub.IdentityServerHost.Pages.Organisations;
@@ -28,10 +31,12 @@ public class OrganisationViewEditModel : PageModel
 
         public string? Description { get; set; }
 
+        [DataType(DataType.Url)]
         public string? Logo { get; set; }
 
-        public string? Uri { get; set; }
+        public Uri? Uri { get; set; }
 
+        [DataType(DataType.Url)]
         public string? Url { get; set; }
     }
     public async Task OnGet(string id)
@@ -45,10 +50,45 @@ public class OrganisationViewEditModel : PageModel
                 Organisation.Name = apiOrganisation.Name;
                 Organisation.Description = apiOrganisation.Description;
                 Organisation.Logo = apiOrganisation.Logo;
-                Organisation.Uri = apiOrganisation.Uri;
                 Organisation.Url = apiOrganisation.Url;
-
             }
         }
+    }
+    public async Task<IActionResult> OnPost()
+    {
+        ModelState.Remove("Organisation.Id");
+
+        if (!string.IsNullOrEmpty(Organisation.Url))
+        {
+            if (!Uri.IsWellFormedUriString(Organisation.Url, UriKind.Absolute))
+            {
+                ModelState.AddModelError("Organisation.Url", "Url is invalid");
+            }
+        }
+
+        if (!string.IsNullOrEmpty(Organisation.Logo))
+        {
+            if (!Uri.IsWellFormedUriString(Organisation.Logo, UriKind.Absolute))
+            {
+                ModelState.AddModelError("Organisation.Logo", "Logo Url is invalid");
+            }
+        }
+
+        if (!ModelState.IsValid)
+            return Page();
+
+        OpenReferralOrganisationWithServicesDto openReferralOrganisationWithServicesDto = new(Organisation.Id, Organisation.Name, Organisation.Description, Organisation.Logo, Organisation.Url, Organisation.Url, new List<OpenReferralServiceDto>());
+
+        if (!string.IsNullOrEmpty(Organisation.Id))
+        {
+            await _apiService.UpdateOrganisation(openReferralOrganisationWithServicesDto);
+        }
+        else
+        {
+            await _apiService.CreateOrganisation(openReferralOrganisationWithServicesDto);
+        }
+
+        return RedirectToPage("ViewOrganisationList");
+
     }
 }

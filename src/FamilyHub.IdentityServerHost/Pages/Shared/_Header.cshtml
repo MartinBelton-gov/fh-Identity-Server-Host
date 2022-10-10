@@ -13,6 +13,8 @@
             <div class="govuk-header__content">
             @if (SignInManager.IsSignedIn(User))
             {
+                @Html.Raw(Model.RenderLink<HomeLink>())
+                @Html.Raw("&nbsp;&nbsp;&nbsp");
                 @Html.Raw(Model.RenderLink<SignOutLink>())
             }
             else
@@ -21,7 +23,7 @@
             }
                 
                 
-                @*@Html.Raw(Model.RenderLink<HomeLink>()) &nbsp;&nbsp;&nbsp;*@
+                
                 @*@Html.Raw(Model.RenderLink<OrganisationAdminLink>())*@
 				@*@Html.Raw(Model.RenderLink<WeatherForecast>()) &nbsp;&nbsp;&nbsp;
 				@Html.Raw(Model.RenderLink<ToDoSelection>())*@
