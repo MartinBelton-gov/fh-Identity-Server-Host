@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using FamilyHub.IdentityServerHost.Models.Entities;
 using FamilyHub.IdentityServerHost.Persistence.Repository;
 using FamilyHub.IdentityServerHost.Services;
 using FamilyHubs.ServiceDirectory.Shared.Models.Api.OpenReferralOrganisations;
@@ -24,10 +25,10 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
 {
     public class RegisterModel : PageModel
     {
-        private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly IUserStore<IdentityUser> _userStore;
-        private readonly IUserEmailStore<IdentityUser> _emailStore;
+        private readonly SignInManager<ApplicationIdentityUser> _signInManager;
+        private readonly UserManager<ApplicationIdentityUser> _userManager;
+        private readonly IUserStore<ApplicationIdentityUser> _userStore;
+        private readonly IUserEmailStore<ApplicationIdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -37,9 +38,9 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         private List<OpenReferralOrganisationDto> _openReferralOrganisationDtos = default!;
 
         public RegisterModel(
-            UserManager<IdentityUser> userManager,
-            IUserStore<IdentityUser> userStore,
-            SignInManager<IdentityUser> signInManager,
+            UserManager<ApplicationIdentityUser> userManager,
+            IUserStore<ApplicationIdentityUser> userStore,
+            SignInManager<ApplicationIdentityUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
             RoleManager<IdentityRole> roleManager,
@@ -203,30 +204,30 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
             return Page();
         }
 
-        private IdentityUser CreateUser()
+        private ApplicationIdentityUser CreateUser()
         {
             try
             {
-                return Activator.CreateInstance<IdentityUser>();
+                return Activator.CreateInstance<ApplicationIdentityUser>();
             }
             catch
             {
-                throw new InvalidOperationException($"Can't create an instance of '{nameof(IdentityUser)}'. " +
-                    $"Ensure that '{nameof(IdentityUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
+                throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationIdentityUser)}'. " +
+                    $"Ensure that '{nameof(ApplicationIdentityUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
                     $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
             }
         }
 
-        private IUserEmailStore<IdentityUser> GetEmailStore()
+        private IUserEmailStore<ApplicationIdentityUser> GetEmailStore()
         {
             if (!_userManager.SupportsUserEmail)
             {
                 throw new NotSupportedException("The default UI requires a user store with email support.");
             }
-            return (IUserEmailStore<IdentityUser>)_userStore;
+            return (IUserEmailStore<ApplicationIdentityUser>)_userStore;
         }
 
-        private async Task AddUserOrganisation(IdentityUser user)
+        private async Task AddUserOrganisation(ApplicationIdentityUser user)
         {
             if (user == null || string.IsNullOrEmpty(SelectedOrganisation))
                 return;
@@ -246,7 +247,7 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
             await _organisationRepository.AddUserOrganisationAsync(new Models.Entities.UserOrganisation(Guid.NewGuid().ToString(), user.Id, organisation.Id));
         }
 
-        private async Task AddUserRoles(IdentityUser user)
+        private async Task AddUserRoles(ApplicationIdentityUser user)
         {
             if (RoleSelection == null || !RoleSelection.Any())
             {

@@ -1,6 +1,6 @@
 ﻿namespace FamilyHub.IdentityServerHost.Models;
 
-public class ApplicationUser
+public class DisplayApplicationUser
 {
     public string Id { get; set; } = default!;
     public string UserName { get; set; } = default!;

@@ -1,3 +1,4 @@
+using FamilyHub.IdentityServerHost.Models.Entities;
 using FamilyHub.IdentityServerHost.Persistence.Repository;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,12 +9,12 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account;
 
 public class DeleteUserModel : PageModel
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationIdentityUser> _userManager;
     private readonly ILogger<DeleteUserModel> _logger;
     private readonly IOrganisationRepository _organisationRepository;
 
     public DeleteUserModel(
-        UserManager<IdentityUser> userManager,
+        UserManager<ApplicationIdentityUser> userManager,
         IOrganisationRepository organisationRepository,
         ILogger<DeleteUserModel> logger)
     {

@@ -7,8 +7,8 @@
 
 @using Microsoft.AspNetCore.Identity
 
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<FamilyHub.IdentityServerHost.Models.Entities.ApplicationIdentityUser> SignInManager
+@inject UserManager<FamilyHub.IdentityServerHost.Models.Entities.ApplicationIdentityUser> UserManager
 
 
 <div class="text-center">
@@ -26,13 +26,13 @@
             <p>
                 <a asp-area="Identity" asp-page="/Account/ManageUsers" asp-route-pageNumber="1">Manage users</a>
             </p>
+        }
 
+        @if (User.IsInRole("DfEAdmin") || User.IsInRole("LAAdmin"))
+        {
             <p>
                 <a asp-page="/Organisations/OrganisationsStartPage">Organisations</a>
             </p>
         }
-
-        
     }
-
 </div>
