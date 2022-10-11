@@ -16,7 +16,8 @@ Migrations Commands
 
 dotnet add package Microsoft.EntityFrameworkCore.Design
 
-dotnet ef migrations add CreateIdentitySchema -c ApplicationDbContext --output-dir C:\Projects\FamilyHubs\fh-Identity-Server-Host\src\FamilyHub.IdentityServerHost\Persistence\Data\CreateIdentitySchema
-dotnet ef migrations add Organisations -c ApplicationDbContext --output-dir C:\Projects\FamilyHubs\fh-Identity-Server-Host\src\FamilyHub.IdentityServerHost\Persistence\Data\AddOrganisation
+dotnet ef migrations add CreateIdentitySchema -c ApplicationDbContext --output-dir Persistence\Data\CreateIdentitySchema
+dotnet ef migrations add Organisations -c ApplicationDbContext --output-dir Persistence\Data\AddOrganisation
+dotnet ef migrations add ModifyUser -c ApplicationDbContext --output-dir Persistence\Data\ModifyUser
 
 dotnet ef database update -c ApplicationDbContext

@@ -4,6 +4,7 @@ using FamilyHub.IdentityServerHost.Persistence.Repository;
 using Microsoft.AspNetCore.Builder;
 using FamilyHub.IdentityServerHost.Services;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using FamilyHub.IdentityServerHost.Models.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +14,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<ApplicationIdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
@@ -31,8 +32,6 @@ builder.Services.AddControllers();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-
-builder.Services.AddHttpClient<IApiService, ApiService>();
 
 builder.Services.AddHttpClient<IApiService, ApiService>(client =>
 {

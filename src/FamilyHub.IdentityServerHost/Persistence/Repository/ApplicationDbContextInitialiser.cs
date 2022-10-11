@@ -15,20 +15,20 @@ public class ApplicationDbContextInitialiser
 {
     private readonly ILogger<ApplicationDbContextInitialiser> _logger;
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationIdentityUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IApiService _apiService;
-    private readonly IUserStore<IdentityUser> _userStore;
-    private readonly IUserEmailStore<IdentityUser> _emailStore;
+    private readonly IUserStore<ApplicationIdentityUser> _userStore;
+    private readonly IUserEmailStore<ApplicationIdentityUser> _emailStore;
 
     private List<OpenReferralOrganisationDto> _openReferralOrganisationDtos = default!;
 
     public ApplicationDbContextInitialiser(ILogger<ApplicationDbContextInitialiser> logger,
         ApplicationDbContext context,
-        UserManager<IdentityUser> userManager,
+        UserManager<ApplicationIdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
         IApiService apiService,
-        IUserStore<IdentityUser> userStore
+        IUserStore<ApplicationIdentityUser> userStore
         )
     {
         _logger = logger;
@@ -85,13 +85,13 @@ public class ApplicationDbContextInitialiser
         await EnsureUsers();
     }
 
-    private IUserEmailStore<IdentityUser> GetEmailStore()
+    private IUserEmailStore<ApplicationIdentityUser> GetEmailStore()
     {
         if (!_userManager.SupportsUserEmail)
         {
             throw new NotSupportedException("The default UI requires a user store with email support.");
         }
-        return (IUserEmailStore<IdentityUser>)_userStore;
+        return (IUserEmailStore<ApplicationIdentityUser>)_userStore;
     }
 
     private async Task EnsureRoles()
@@ -147,21 +147,21 @@ public class ApplicationDbContextInitialiser
         }
     }
 
-    private IdentityUser CreateUser()
+    private ApplicationIdentityUser CreateUser()
     {
         try
         {
-            return Activator.CreateInstance<IdentityUser>();
+            return Activator.CreateInstance<ApplicationIdentityUser>();
         }
         catch
         {
-            throw new InvalidOperationException($"Can't create an instance of '{nameof(IdentityUser)}'. " +
-                $"Ensure that '{nameof(IdentityUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
+            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationIdentityUser)}'. " +
+                $"Ensure that '{nameof(ApplicationIdentityUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
                 $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
         }
     }
 
-    private async Task AddUser(UserManager<IdentityUser> userMgr, string person, string password, string role, string website)
+    private async Task AddUser(UserManager<ApplicationIdentityUser> userMgr, string person, string password, string role, string website)
     {
         var user = userMgr.FindByNameAsync(person).Result;
         if (user == null)
