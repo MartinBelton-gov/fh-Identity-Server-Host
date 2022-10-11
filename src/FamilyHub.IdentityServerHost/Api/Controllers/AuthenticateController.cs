@@ -199,8 +199,8 @@ public class AuthenticateController : ControllerBase
 
         return new ObjectResult(new
         {
-            accessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
-            refreshToken = newRefreshToken
+            AccessToken = new JwtSecurityTokenHandler().WriteToken(newAccessToken),
+            RefreshToken = newRefreshToken
         });
     }
 
