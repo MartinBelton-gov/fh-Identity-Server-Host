@@ -12,9 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Security.Claims;
@@ -82,10 +80,8 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         [BindProperty]
         public List<string> RoleSelection { get; set; } = default!;
 
-        [Required]
         [BindProperty]
-        public string SelectedOrganisation { get; set; } = default!;
-        public List<SelectListItem> OrganisationList { get; set; } = default(List<SelectListItem>);
+        public string? Organisations { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -123,9 +119,10 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         }
 
 
-        public async Task OnGetAsync(string returnUrl = null)
+        public async Task OnGetAsync(string returnUrl = null, string organisations = null)
         {
             ReturnUrl = returnUrl;
+            Organisations = organisations;
             await Init();
         }
 
@@ -135,15 +132,13 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
                 AvailableRoles = _roleManager.Roles.OrderBy(x => x.Name).ToList();
             else
                 AvailableRoles = _roleManager.Roles.Where(x => x.Name != "DfEAdmin").OrderBy(x => x.Name).ToList();
-            var list = await _apiService.GetListOpenReferralOrganisations();
-            OrganisationList = list.OrderBy(x => x.Name).Select(c => new SelectListItem() { Text = c.Name, Value = c.Id }).ToList();
+            
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
             if (!User.IsInRole("DfEAdmin"))
             {
                 var userEmail = User.FindFirstValue(ClaimTypes.Email);
                 var user = await _userManager.FindByEmailAsync(userEmail);
-                SelectedOrganisation = _organisationRepository.GetUserOrganisationIdByUserId(user.Id);
             }
         }
 
@@ -229,7 +224,7 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
 
         private async Task AddUserOrganisation(ApplicationIdentityUser user)
         {
-            if (user == null || string.IsNullOrEmpty(SelectedOrganisation))
+            if (user == null)
                 return;
 
             if (_openReferralOrganisationDtos == null || !_openReferralOrganisationDtos.Any())
@@ -240,11 +235,20 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
             if (_openReferralOrganisationDtos == null)
                 return;
 
-            var organisation = _openReferralOrganisationDtos.FirstOrDefault(x => x.Id == SelectedOrganisation);
-            if (organisation == null)
-                return;
+            //if anything already exists then remove it.
+            await _organisationRepository.DeleteUserByUserIdAsync(user.Id);
 
-            await _organisationRepository.AddUserOrganisationAsync(new Models.Entities.UserOrganisation(Guid.NewGuid().ToString(), user.Id, organisation.Id));
+            if (Organisations != null)
+            {
+                string[] parts = Organisations.Split(',');
+                if (parts != null && parts.Any())
+                {
+                    foreach (string part in parts)
+                    {
+                        await _organisationRepository.AddUserOrganisationAsync(new Models.Entities.UserOrganisation(Guid.NewGuid().ToString(), user.Id, part));
+                    }
+                }
+            }
         }
 
         private async Task AddUserRoles(ApplicationIdentityUser user)

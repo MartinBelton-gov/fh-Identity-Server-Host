@@ -36,24 +36,11 @@
     <div class="govuk-grid-row">
         <div class="column1">
             <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <input asp-for="@Model.Organisations" type="hidden">
                 <h2>Create a new account.</h2>
                 <hr />
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <div class="govuk-form-group">
-                    <label for="chooseLanguage1" class="govuk-label">Select an organisation</label>
-                    @if(User.IsInRole("DfEAdmin"))
-                    {
-                        <select class="govuk-select" id="SelectedOrganisation" name="SelectedOrganisation" asp-for="@Model.SelectedOrganisation" asp-items="@Model.OrganisationList"></select>
-                        <span asp-validation-for="SelectedOrganisation" class="text-danger"></span>
-                    }
-                    else
-                    {
-                        <select class="govuk-select" id="SelectedOrganisation" name="SelectedOrganisation" asp-for="@Model.SelectedOrganisation" asp-items="@Model.OrganisationList" disabled></select>
-                        <input asp-for="@Model.SelectedOrganisation" name="SelectedOrganisation" type="hidden" />
-                        <span asp-validation-for="SelectedOrganisation" class="text-danger"></span>
-                    }
-                    
-                </div>
+
                 <div class="govuk-form-group">
                     <label asp-for="Input.Email" class="govuk-label"></label>
                     <input asp-for="Input.Email" class="govuk-input govuk-!-width-one-half" autocomplete="username" aria-required="true" />
