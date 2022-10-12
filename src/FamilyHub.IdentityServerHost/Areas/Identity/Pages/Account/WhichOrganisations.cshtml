@@ -10,7 +10,7 @@
                 <form method="post">
                     <div class="govuk-form-group--add-another-language @(Model.ValidationValid == false ? "govuk-form-group--error" : "")">
 
-                        <h2 class="govuk-heading-l moj-add-another__heading" tabindex="-1">Which language is the service offered in?</h2>
+                        <h2 class="govuk-heading-l moj-add-another__heading" tabindex="-1">Which organisation(s) is the user associated with?</h2>
 
                         <input asp-for="@Model.ReturnUrl" type="hidden">
                         <input asp-for="@Model.OrganisationNumber" type="hidden">
@@ -24,7 +24,7 @@
                                     if (Model.AllOrganisationsSelected == false && Model.OrganisationNotSelectedIndex == i)
                                     {
                                         <p class="govuk-error-message">
-                                            <span class="govuk-visually-hidden">Error:</span> Please select a language
+                                            <span class="govuk-visually-hidden">Error:</span> Please select an organisation
                                         </p>
                                     }
                                 }
@@ -39,7 +39,7 @@
                                 }
 
                                 <div class="govuk-form-group">
-                                    <label for="LanguageCode@(i)" class="govuk-label">Select a language</label>
+                                    <label for="LanguageCode@(i)" class="govuk-label">Select an organisation</label>
                                     <select class="govuk-select" id="OrganisationCode@(i)" name="OrganisationCode" asp-for="@Model.OrganisationCode[i]" asp-items="@Model.OrganisationSelectionList"></select>
                                 </div>
 

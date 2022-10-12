@@ -19,7 +19,10 @@
                     </p>
                     @if(User.IsInRole("DfEAdmin"))
                     {
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register a DfE Admin with no organisation</a>
+                        <p>
+                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register a new user with no organisation</a>
+                        </p>
+                        
                     }
                 </div>
                 <br>

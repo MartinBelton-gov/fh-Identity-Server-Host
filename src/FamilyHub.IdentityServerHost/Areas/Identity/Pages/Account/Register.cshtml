@@ -41,6 +41,17 @@
                 <hr />
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+                @if(Model.UserOrganisations != null && Model.UserOrganisations.Any())
+                {
+                    <label class="govuk-label">User Organisations:</label>
+                    <div class="govuk-form-group">
+                        @foreach(var org in Model.UserOrganisations)
+                        {
+                            @org.Name
+                        }
+                    </div>
+                }
+
                 <div class="govuk-form-group">
                     <label asp-for="Input.Email" class="govuk-label"></label>
                     <input asp-for="Input.Email" class="govuk-input govuk-!-width-one-half" autocomplete="username" aria-required="true" />
