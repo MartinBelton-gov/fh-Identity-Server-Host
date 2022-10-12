@@ -3,6 +3,7 @@
 #nullable disable
 
 using FamilyHub.IdentityServerHost.Models.Entities;
+using FamilyHub.IdentityServerHost.Persistence.Data.AddOrganisation;
 using FamilyHub.IdentityServerHost.Persistence.Repository;
 using FamilyHub.IdentityServerHost.Services;
 using FamilyHubs.ServiceDirectory.Shared.Models.Api.OpenReferralOrganisations;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Caching.Memory;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Security.Claims;
@@ -32,8 +34,9 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IOrganisationRepository _organisationRepository;
         private readonly IApiService _apiService;
+        private readonly IMemoryCache _memoryCache;
 
-        private List<OpenReferralOrganisationDto> _openReferralOrganisationDtos = default!;
+        public List<OpenReferralOrganisationDto> UserOrganisations { get; set; } = default!;
 
         public RegisterModel(
             UserManager<ApplicationIdentityUser> userManager,
@@ -43,7 +46,8 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
             IEmailSender emailSender,
             RoleManager<IdentityRole> roleManager,
             IOrganisationRepository organisationRepository,
-            IApiService apiService)
+            IApiService apiService,
+            IMemoryCache memoryCache)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -53,7 +57,8 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
             _emailSender = emailSender;
             _roleManager = roleManager;
             _organisationRepository = organisationRepository;
-            _apiService = apiService;   
+            _apiService = apiService;
+            _memoryCache = memoryCache;
         }
 
         /// <summary>
@@ -123,6 +128,7 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             Organisations = organisations;
+            _memoryCache.Remove("OrganisationList");
             await Init();
         }
 
@@ -140,6 +146,39 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
                 var userEmail = User.FindFirstValue(ClaimTypes.Email);
                 var user = await _userManager.FindByEmailAsync(userEmail);
             }
+
+            if (!string.IsNullOrEmpty(Organisations))
+            {
+                string[] parts = Organisations.Split(',');
+                if (parts != null && parts.Any())
+                {
+                    UserOrganisations = new List<OpenReferralOrganisationDto>();
+                    foreach (string part in parts)
+                    {
+                        UserOrganisations.Add( await GetOrganisationById(part) );
+                    }
+                }
+            }
+        }
+
+        private async Task<OpenReferralOrganisationDto> GetOrganisationById(string id)
+        {
+            if (_memoryCache.TryGetValue("OrganisationList", out List<OpenReferralOrganisationDto> cacheValue))
+            {
+                return cacheValue.FirstOrDefault(x => x.Id == id);
+            }
+
+            var organisationList = await _apiService.GetListOpenReferralOrganisations();
+
+            TimeSpan ts = new TimeSpan(0, 5, 0);
+            var cacheEntryOptions = new MemoryCacheEntryOptions()
+                .SetSlidingExpiration(ts);
+
+            _memoryCache.Set("OrganisationList", organisationList, cacheEntryOptions);
+
+            return organisationList.FirstOrDefault(x => x.Id == id);
+
+
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -225,14 +264,6 @@ namespace FamilyHub.IdentityServerHost.Areas.Identity.Pages.Account
         private async Task AddUserOrganisation(ApplicationIdentityUser user)
         {
             if (user == null)
-                return;
-
-            if (_openReferralOrganisationDtos == null || !_openReferralOrganisationDtos.Any())
-            {
-                _openReferralOrganisationDtos = await _apiService.GetListOpenReferralOrganisations();
-            }
-
-            if (_openReferralOrganisationDtos == null)
                 return;
 
             //if anything already exists then remove it.
