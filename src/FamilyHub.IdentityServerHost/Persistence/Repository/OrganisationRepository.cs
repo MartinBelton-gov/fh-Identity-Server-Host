@@ -53,10 +53,14 @@ public class OrganisationRepository : IOrganisationRepository
 
     public async Task DeleteUserByUserIdAsync(string userId, CancellationToken cancellationToken = new CancellationToken())
     {
-        var userOrganisation = _applicationDbContext.UserOrganisations.FirstOrDefault(x => x.UserId == userId);
-        if (userOrganisation != null)
+        var userOrganisations = _applicationDbContext.UserOrganisations.Where(x => x.UserId == userId);
+        if (userOrganisations != null && userOrganisations.Any())
         {
-            _applicationDbContext.UserOrganisations.Remove(userOrganisation);
+            foreach(var item in userOrganisations)
+            {
+                _applicationDbContext.UserOrganisations.Remove(item);
+            }
+            
             await _applicationDbContext.SaveChangesAsync(cancellationToken);
         }
     }
